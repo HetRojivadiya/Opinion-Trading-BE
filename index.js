@@ -59,7 +59,7 @@ const { email, password } = req.body;
       const user = await User.findOne({ email });
       if (user && await bcrypt.compare(password, user.password)) {
         // Generate JWT token
-        const token = jwt.sign({ userId: user._id, email: user.email }, 'your-secret-key', { expiresIn: '1h' });
+        const token = jwt.sign({ userId: user._id, email: user.email }, 'your-secret-key', { expiresIn: '1m' });
   
         res.json({ token });
       } else {
@@ -68,6 +68,21 @@ const { email, password } = req.body;
     } catch (err) {
       console.error('Error during login:', err);
       return res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/check-token', (req, res) => {
+    const { token } = req.body;
+  
+    if (!token) {
+      return res.status(400).json({ message: 'Token is required' });
+    }
+  
+    try {
+      const decoded = jwt.verify(token, 'your-secret-key');  // Replace 'your-secret-key' with your actual secret key
+      res.status(200).json({ message: 'Token is valid', decoded });
+    } catch (err) {
+      res.status(400).json({ message: 'Invalid Token' });
     }
   });
 
