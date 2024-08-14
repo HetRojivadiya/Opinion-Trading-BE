@@ -74,6 +74,21 @@ const { email, password } = req.body;
     }
   });
 
+  app.post('/check-token', (req, res) => {
+    const { token } = req.body;
+  
+    if (!token) {
+      return res.status(400).json({ message: 'Token is required' });
+    }
+  
+    try {
+      const decoded = jwt.verify(token, 'your-secret-key');  // Replace 'your-secret-key' with your actual secret key
+      res.status(200).json({ message: 'Token is valid', decoded });
+    } catch (err) {
+      res.status(400).json({ message: 'Invalid Token' });
+    }
+  });
+
 
 
 //Login Route
