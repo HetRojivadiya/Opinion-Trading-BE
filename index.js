@@ -20,29 +20,33 @@ connectDB(uri);
 const User = require("./Database/model/users");
 
 
-
-
-
-
 // Signup route
 app.post('/signup', async (req, res) => {
     const { email, password } = req.body;
   
+   
     try {
       // Check if user already exists
+     
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         return res.status(400).json({ message: 'User already exists' });
       }
+      
   
       // Hash the password
       const hashedPassword = await bcrypt.hash(password, 10);
-  
       // Create and save new user
       const newUser = new User({ email, password: hashedPassword });
       await newUser.save();
+
+      const user = await User.findOne({ email });
+
+      const token = jwt.sign({ userId: user._id, email: user.email }, 'your-secret-key', { expiresIn: '1h' });
   
-      res.status(201).json({ message: 'User created successfully' });
+      res.json({ token });
+  
+    
     } catch (err) {
       console.error('Error during signup:', err);
       return res.status(500).json({ message: 'Internal server error' });
@@ -50,8 +54,7 @@ app.post('/signup', async (req, res) => {
   });
 
 
-//Login Route
-app.post('/login', async (req, res) => {
+  app.post('/login', async (req, res) => {
 const { email, password } = req.body;
   
     try {
@@ -59,7 +62,7 @@ const { email, password } = req.body;
       const user = await User.findOne({ email });
       if (user && await bcrypt.compare(password, user.password)) {
         // Generate JWT token
-        const token = jwt.sign({ userId: user._id, email: user.email }, 'your-secret-key', { expiresIn: '1h' });
+        const token = jwt.sign({ userId: user._id, email: user.email }, 'your-secret-key', { expiresIn: '1m' });
   
         res.json({ token });
       } else {
@@ -72,6 +75,30 @@ const { email, password } = req.body;
   });
 
 
+
+//Login Route
+app.post('/login', async (req, res) => {
+const { email, password } = req.body;
+  
+    try {
+      // Find user by email
+      const user = await User.findOne({ email });
+      if (user && await bcrypt.compare(password, user.password)) {
+        // Generate JWT token
+        const token = jwt.sign({ userId: user._id, email: user.email }, 'your-secret-key', { expiresIn: '1m' });
+  
+        res.json({ token });
+      } else {
+        res.status(401).json({ message: 'Authentication failed' });
+      }
+    } catch (err) {
+      console.error('Error during login:', err);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+
+    
 
   
   app.listen(3001, () => {
